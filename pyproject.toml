@@ -74,3 +74,15 @@ asyncio_mode = "auto"
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]
+
+[tool.pyright]
+include = ["src", "tests"]
+extraPaths = ["."]
+executionEnvironments = [
+  { root = ".", extraPaths = ["."] }
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
