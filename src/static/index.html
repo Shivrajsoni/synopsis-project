@@ -8,6 +8,10 @@
   <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
   <!-- Marked.js for high-speed client-side Markdown rendering -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- KaTeX for beautiful math equation rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
   <!-- DOMPurify for XSS sanitation -->
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
   <script>
@@ -116,44 +120,15 @@
         <span>New Conversation</span>
       </button>
 
-      <!-- Knowledge Base Statistics Badge -->
-      <div class="mt-5 p-3.5 bg-[#141e33] border border-slate-800/80 rounded-xl">
-        <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
-          <span class="flex items-center space-x-1.5 font-medium">
-            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span class="text-slate-300">RAG Knowledge Base</span>
-          </span>
-          <span class="text-amber-400 font-bold" id="stats-vectors">471 Vectors</span>
+      <!-- Previous Asked Questions / Chat History -->
+      <div class="mt-5 flex-1 flex flex-col overflow-hidden">
+        <div class="flex items-center justify-between mb-2.5">
+          <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Chat History</p>
+          <button onclick="clearHistory()" title="Clear History" class="text-[10px] text-slate-500 hover:text-rose-400 transition">Clear</button>
         </div>
-        <div class="text-[11px] text-slate-400 space-y-1">
-          <div class="flex justify-between"><span>Indexed Documents:</span> <span class="text-slate-200 font-medium" id="stats-docs">63 Sources</span></div>
-          <div class="flex justify-between"><span>Active LLM:</span> <span class="text-emerald-400 font-medium">Llama 3.2 (3B)</span></div>
-          <div class="flex justify-between"><span>Hardware Engine:</span> <span class="text-slate-200 font-medium">Apple Metal (MPS)</span></div>
-        </div>
-      </div>
-
-      <!-- Quick Preset Topics -->
-      <div class="mt-5 flex-1 overflow-y-auto pr-1">
-        <p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5">Suggested Questions</p>
-        <div class="space-y-1.5 text-xs">
-          <button onclick="sendPreset(this.innerText)" class="w-full text-left p-2.5 rounded-lg bg-[#141e33]/50 hover:bg-[#1e2c4a] border border-slate-800/50 hover:border-amber-500/30 text-slate-300 hover:text-white transition">
-            👨‍🏫 Who is Dr. Mukesh Kumar at UIET?
-          </button>
-          <button onclick="sendPreset(this.innerText)" class="w-full text-left p-2.5 rounded-lg bg-[#141e33]/50 hover:bg-[#1e2c4a] border border-slate-800/50 hover:border-amber-500/30 text-slate-300 hover:text-white transition">
-            🏛️ How many hostels exist in Panjab University and how to apply?
-          </button>
-          <button onclick="sendPreset(this.innerText)" class="w-full text-left p-2.5 rounded-lg bg-[#141e33]/50 hover:bg-[#1e2c4a] border border-slate-800/50 hover:border-amber-500/30 text-slate-300 hover:text-white transition">
-            🎓 What is the highest package in UIET placements?
-          </button>
-          <button onclick="sendPreset(this.innerText)" class="w-full text-left p-2.5 rounded-lg bg-[#141e33]/50 hover:bg-[#1e2c4a] border border-slate-800/50 hover:border-amber-500/30 text-slate-300 hover:text-white transition">
-            📐 What is the CGPA to percentage conversion formula?
-          </button>
-          <button onclick="sendPreset(this.innerText)" class="w-full text-left p-2.5 rounded-lg bg-[#141e33]/50 hover:bg-[#1e2c4a] border border-slate-800/50 hover:border-amber-500/30 text-slate-300 hover:text-white transition">
-            💰 What is Shraman Foundation scholarship at UIET?
-          </button>
-          <button onclick="sendPreset(this.innerText)" class="w-full text-left p-2.5 rounded-lg bg-[#141e33]/50 hover:bg-[#1e2c4a] border border-slate-800/50 hover:border-amber-500/30 text-slate-300 hover:text-white transition">
-            📋 What are the attendance and condonation rules?
-          </button>
+        <div id="history-list" class="flex-1 overflow-y-auto pr-1 space-y-1.5 text-xs">
+          <!-- Dynamically populated from localStorage -->
+          <div id="history-empty" class="text-slate-500 text-xs italic p-2 text-center">No questions asked yet.</div>
         </div>
       </div>
 
@@ -201,9 +176,18 @@
             <p class="text-xs text-slate-400">Your AI counselor powered by local Llama 3.2 3B and 471 indexed official university vectors.</p>
           </div>
         </div>
-        <p class="text-xs text-slate-300 leading-relaxed">
+        <p class="text-xs text-slate-300 leading-relaxed mb-4">
           Ask questions regarding <strong>B.E. admissions (JAC Chandigarh), cutoffs, fee structures, lateral entry (PULEET/PUMEET), scholarships, hostel accommodation, and UIET placement statistics</strong>. Every answer includes citations to official university notices.
         </p>
+        <div class="pt-3 border-t border-slate-800/80">
+          <p class="text-[11px] font-medium text-slate-400 mb-2">Popular queries:</p>
+          <div class="flex flex-wrap gap-2 text-xs">
+            <button onclick="askPrompt(this.innerText)" class="px-2.5 py-1.5 rounded-lg bg-[#141e33] hover:bg-[#1e2c4a] border border-slate-700/60 hover:border-amber-500/40 text-slate-300 hover:text-white transition">📐 CGPA to percentage formula</button>
+            <button onclick="askPrompt(this.innerText)" class="px-2.5 py-1.5 rounded-lg bg-[#141e33] hover:bg-[#1e2c4a] border border-slate-700/60 hover:border-amber-500/40 text-slate-300 hover:text-white transition">💰 Shraman Foundation scholarship</button>
+            <button onclick="askPrompt(this.innerText)" class="px-2.5 py-1.5 rounded-lg bg-[#141e33] hover:bg-[#1e2c4a] border border-slate-700/60 hover:border-amber-500/40 text-slate-300 hover:text-white transition">🏛️ Hostel accommodation & fees</button>
+            <button onclick="askPrompt(this.innerText)" class="px-2.5 py-1.5 rounded-lg bg-[#141e33] hover:bg-[#1e2c4a] border border-slate-700/60 hover:border-amber-500/40 text-slate-300 hover:text-white transition">👨‍🏫 Dr. Mukesh Kumar profile</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -237,15 +221,80 @@
     const chatContainer = document.getElementById('chat-messages');
     const userInput = document.getElementById('user-input');
     const sendBtn = document.getElementById('send-btn');
+    const historyList = document.getElementById('history-list');
     let isGenerating = false;
+
+    // History Storage in localStorage
+    const HISTORY_STORAGE_KEY = 'pu_rag_chat_history_v1';
+
+    function getHistory() {
+      try {
+        return JSON.parse(localStorage.getItem(HISTORY_STORAGE_KEY)) || [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function saveQuestionToHistory(question) {
+      if (!question) return;
+      let history = getHistory();
+      // Remove duplicates if already present
+      history = history.filter(q => q.toLowerCase() !== question.toLowerCase());
+      // Insert latest at front
+      history.unshift(question);
+      if (history.length > 30) history = history.slice(0, 30);
+      try {
+        localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+      } catch (e) {
+        console.warn('Could not save history to localStorage:', e);
+      }
+      renderHistorySidebar();
+    }
+
+    function clearHistory() {
+      localStorage.removeItem(HISTORY_STORAGE_KEY);
+      renderHistorySidebar();
+    }
+
+    function renderHistorySidebar() {
+      const history = getHistory();
+      if (!historyList) return;
+
+      if (history.length === 0) {
+        historyList.innerHTML = '<div class="text-slate-500 text-xs italic p-2 text-center">No questions asked yet.</div>';
+        return;
+      }
+
+      historyList.innerHTML = history.map((q, idx) => `
+        <button onclick="askFromHistory(${idx})" class="w-full text-left p-2 rounded-lg bg-[#141e33]/50 hover:bg-[#1e2c4a] border border-slate-800/60 hover:border-amber-500/30 text-slate-300 hover:text-white transition flex items-start gap-2 truncate group" title="${escapeHTML(q)}">
+          <svg class="w-3.5 h-3.5 mt-0.5 text-slate-500 group-hover:text-amber-400 shrink-0 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+          <span class="truncate">${escapeHTML(q)}</span>
+        </button>
+      `).join('');
+    }
+
+    function askFromHistory(index) {
+      const history = getHistory();
+      if (history[index]) {
+        userInput.value = history[index];
+        handleSend(new Event('submit'));
+      }
+    }
+
+    function askPrompt(text) {
+      const clean = text.replace(/^[^\w\s]+/, '').trim();
+      userInput.value = clean;
+      handleSend(new Event('submit'));
+    }
+
+    // Initialize History on page load
+    renderHistorySidebar();
 
     // Load Stats on Startup
     async function loadStats() {
       try {
         const res = await fetch('/api/stats');
         const data = await res.json();
-        document.getElementById('stats-vectors').innerText = `${data.vector_count} Vectors`;
-        document.getElementById('stats-docs').innerText = `${data.processed_documents} Sources`;
       } catch (e) {
         console.warn('Could not fetch stats:', e);
       }
@@ -265,13 +314,6 @@
       }
     }
 
-    function sendPreset(text) {
-      // Remove leading emoji if present
-      const clean = text.replace(/^[^\w\s]+/, '').trim();
-      userInput.value = clean;
-      handleSend(new Event('submit'));
-    }
-
     function newConversation() {
       chatContainer.innerHTML = '';
       loadStats();
@@ -289,6 +331,9 @@
       if (e) e.preventDefault();
       const message = userInput.value.trim();
       if (!message || isGenerating) return;
+
+      // Persist question to sidebar history
+      saveQuestionToHistory(message);
 
       // Append User Bubble
       appendUserMessage(message);
@@ -435,8 +480,28 @@
       } else {
         body.classList.remove('typing-cursor');
       }
+
+      // 1. Parse standard markdown
       const rawHtml = marked.parse(markdownText);
+      // 2. Sanitize against XSS
       body.innerHTML = DOMPurify.sanitize(rawHtml);
+
+      // 3. Render KaTeX math formulas ($...$ or $$...$$) once streaming is done or on chunks
+      if (window.renderMathInElement) {
+        try {
+          renderMathInElement(body, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '$', right: '$', display: false },
+              { left: '\\(', right: '\\)', display: false },
+              { left: '\\[', right: '\\]', display: true }
+            ],
+            throwOnError: false
+          });
+        } catch (e) {
+          // Graceful fallback if math token is currently split across chunks
+        }
+      }
     }
 
     function escapeHTML(str) {
