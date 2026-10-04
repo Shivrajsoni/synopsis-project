@@ -1,0 +1,32 @@
+# Web API & Streaming Server
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.7.0
+httpx>=0.27.0
+
+# Vector Store, Embeddings & Math
+chromadb>=0.5.0
+numpy>=1.26.0
+
+# Anti-Bot & Stealth Network Fetching
+curl_cffi>=0.7.0
+cloudscraper>=1.2.71
+requests>=2.31.0
+urllib3>=2.2.0
+
+# Content Extraction & Parsers
+trafilatura>=1.12.0
+beautifulsoup4>=4.12.0
+lxml>=5.2.0
+markdownify>=0.12.0
+
+# PDF Parsing & Extraction
+pdfplumber>=0.11.0
+pymupdf>=1.24.0
+pypdf>=4.2.0
+
+# Utilities & Data Processing
+tqdm>=4.66.0
+pandas>=2.2.0
+python-dateutil>=2.9.0
+python-dotenv>=1.0.0
